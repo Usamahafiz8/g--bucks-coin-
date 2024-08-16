@@ -4,41 +4,40 @@ module g_bucks::coin {
     use sui::transfer;
     use sui::tx_context::{Self as tx_context, TxContext};
     use sui::object::{Self as sui_object, UID};
+    // use sui::token::{Self}
+    
+    // The main struct representing the G-Bucks coin.
+    struct COIN has drop {}
 
-    struct COIN has drop {} // The `drop` ability allows the COIN struct to be dropped (destroyed)
-
-    struct CoinOwner has key{ // Added 'store' ability
-        id: UID,              // Unique ID for the CoinOwner object
-        owner: address,       // Address of the coin owner
+    // The TransferCap struct is used to control and authorize the transfer of G-Bucks coins.
+    struct TransferCap has key {
+        id: UID,
     }
 
-struct TransferCap has key {
-    id: UID,
-}
+
+// token::newpolicy <transty cap> {token policy and } new_policy
+// NEW POLICY FOR THE transfer  
+// close loop token >>  new policy >> transfer policy actions ...
+
+    // Initializes the G-Bucks coin, creates the necessary capabilities,
+    // and transfers them to the transaction sender.
     fun init(witness: COIN, ctx: &mut TxContext) {
         let (treasury_cap, metadata) = coin::create_currency<COIN>(
-            witness,                               // The COIN witness to ensure the correct type is used
-            1,                                     // Decimal places for the currency
-            b"G-Bucks",                            // Short name for the currency
-            b"Gamisode Bucks",                     // Display name for the currency
-            b"the Coins for the Gamisodes Platform", // Description of the currency
-            option::none(),                        // Optional URL for the currency's icon (none in this case)
-            ctx                                    // The transaction context
+            witness,                               
+            1,                                     
+            b"G-Bucks",                            
+            b"Gamisode Bucks",                     
+            b"the Coins for the Gamisodes Platform", 
+            option::none(),                        
+            ctx                                    
         );
 
-let transfer_cap = TransferCap {
-
-            id: sui_object::new(ctx),             // Generate a new UID for the CoinOwner object
+        let transfer_cap = TransferCap {
+            id: sui_object::new(ctx),        
         };
-        let owner = CoinOwner {
-            id: sui_object::new(ctx),             // Generate a new UID for the CoinOwner object
-            owner: tx_context::sender(ctx),       // Store the sender's address as the owner
-        };
-        transfer ::transfer(transfer_cap,tx_context::sender(ctx));
+        transfer ::transfer(transfer_cap,tx_context::sender(ctx)); // granting the ability to authorize and control the transfer of G-Bucks coins.
         transfer::public_freeze_object(metadata); // Freezing the metadata to prevent further changes
         transfer::public_transfer(treasury_cap, tx_context::sender(ctx)); // Transferring the treasury capability to the transaction sender
-        // Transfer the CoinOwner object to the sender
-        transfer::transfer(owner, tx_context::sender(ctx));
     }
 
     // public entry fun mint(
@@ -51,6 +50,8 @@ let transfer_cap = TransferCap {
     //     let minted_coins = coin::mint(treasury_cap, amount, ctx);
     //     transfer::public_transfer(minted_coins, tx_context::sender(ctx));
     // }
+
+
 
     // public entry fun transfer(
     //     _transfer_cap: &mut TransferCap,
@@ -78,6 +79,8 @@ let transfer_cap = TransferCap {
     }
 
 
+
+
     /// Function to spend G-Bucks by destroying the coin
     public fun spend(
         treasury_cap: &mut TreasuryCap<COIN>,
@@ -86,6 +89,5 @@ let transfer_cap = TransferCap {
     ) {
         // Destroy the coin (spend it)
         coin::burn(treasury_cap, coin);
-
     }
 }
